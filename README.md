@@ -16,7 +16,7 @@ optional arguments:
   -v, --version         display version and exit
   -d, --distance        estimate distance in km with 2/3 lightspeed
   -p SECONDS, --pause SECONDS
-                        pause seconds between ping requests (default: 1)
+                        pause seconds between ping requests (default: 2)
   -s, --statistics      display minimum & maximum statistics
 
 CTRL-C to exit.
