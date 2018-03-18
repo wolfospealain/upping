@@ -123,7 +123,7 @@ class Connection:
     def lightspeed(ms, percentage=2/3):
         """Calculate the minimum distance for lightspeed travel (in a cable)."""
         c = 299792458
-        km = (c * (ms/1000) * percentage) / 1000
+        km = (c * (ms/1000) * percentage) / 1000 / 2
         return int(km)
 
     def output(statistics=False, distance=False):
