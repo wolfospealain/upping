@@ -139,8 +139,8 @@ class Connection:
         if statistics:
             message += " (min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms)"
         if distance:
-            message += "; <" + str(Connection.lightspeed(Connection.min)) +"km"
-        message += "; " + str(Connection.uptime) + ". " + str(Connection.ms) + "ms "
+            message += "; <" + str(Connection.lightspeed(Connection.min)) + "km"
+        message += "; " + str(Connection.uptime) + "; " + str(Connection.ms) + "ms "
 
         return message
 
@@ -154,17 +154,17 @@ def parse_command_line():
     description = "%(prog)s version " + VERSION + ". " \
                   + "A top/uptime inspired version of ping: " \
                   "Average ping speeds for 1, 5, 15 min. (statistics); " \
-                  "distance (km); connection uptime / error time. " \
-                  "Current ping speed."
+                  "distance (km); connection uptime / error time; " \
+                  "current ping speed."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     parser.add_argument("-v", "--version", help="display version and exit",
                         action="version", version="%(prog)s " + VERSION)
     parser.add_argument("-d", "--distance", help="estimate distance in km with 2/3 lightspeed",
-                      action="store_true", dest="percentage", default=False, )
+                      action="store_true", dest="percentage", default=False)
     parser.add_argument("-p", "--pause", help="pause seconds between ping requests (default: %(default)s)",
-                      action="store", dest="seconds", default=1, )
+                      action="store", type=int, dest="seconds", default=2)
     parser.add_argument("-s", "--statistics", help="display minimum & maximum statistics",
-                      action="store_true",  dest="statistics", default=False, )
+                      action="store_true",  dest="statistics", default=False)
     parser.add_argument("destination", type=str, nargs=1, help="network destination IP or address")
     args = parser.parse_args()
     if not args:
