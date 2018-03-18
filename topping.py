@@ -3,7 +3,6 @@
 
 import argparse
 import sys
-import signal
 import subprocess
 import time
 from datetime import datetime, timedelta
