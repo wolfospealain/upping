@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 # wolfospealain, March 2018.
 
-from optparse import OptionParser
+import argparse
 import sys
+import signal
 import subprocess
 import time
 from datetime import datetime, timedelta
@@ -61,6 +62,9 @@ class Ping:
             output = subprocess.check_output(["ping", Ping._argument, target], stderr=subprocess.DEVNULL).decode("utf-8")
             ms = eval(output[output.find("time=") + 5:output.find(" ms")])
             return ms
+        except KeyboardInterrupt:
+            print()
+            sys.exit(0)
         except:
             return False
 
@@ -137,7 +141,7 @@ class Connection:
             message += " (min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms)"
         if distance:
             message += "; <" + str(Connection.lightspeed(Connection.min)) +"km"
-        message += "; " + str(Connection.uptime) + ". " + str(Connection.ms) + "ms"
+        message += "; " + str(Connection.uptime) + ". " + str(Connection.ms) + "ms "
 
         return message
 
@@ -148,32 +152,39 @@ class Connection:
 
 
 def parse_command_line():
-    usage = "usage: %prog [options] target"
-    version = "%prog: " + VERSION
-    description = "A top/uptime inspired version of ping: " \
+    description = "%(prog)s version " + VERSION + ". " \
+                  + "A top/uptime inspired version of ping: " \
                   "Average ping speeds for 1, 5, 15 min. (statistics); " \
                   "distance (km); connection uptime / error time. " \
                   "Current ping speed."
-    parser = OptionParser(usage=usage, version=version, description=description)
-    parser.add_option("-d", "--distance", help="estimate distance in km with 2/3 lightspeed",
+    parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
+    parser.add_argument("-v", "--version", help="display version and exit",
+                        action="version", version="%(prog)s " + VERSION)
+    parser.add_argument("-d", "--distance", help="estimate distance in km with 2/3 lightspeed",
                       action="store_true", dest="percentage", default=False, )
-    parser.add_option("-p", "--pause", help="pause seconds between ping requests (default: %default)",
+    parser.add_argument("-p", "--pause", help="pause seconds between ping requests (default: %(default)s)",
                       action="store", dest="seconds", default=1, )
-    parser.add_option("-s", "--statistics", help="display minimum & maximum statistics",
+    parser.add_argument("-s", "--statistics", help="display minimum & maximum statistics",
                       action="store_true",  dest="statistics", default=False, )
-    (options, args) = parser.parse_args()
+    parser.add_argument("destination", type=str, nargs=1, help="network destination IP or address")
+    args = parser.parse_args()
     if not args:
         parser.print_help()
         sys.exit(1)
-    return options, args[0]
+    return args
 
 
 if __name__ == "__main__":
-    options, Connection.target = parse_command_line()
-    while True:
-        if Connection.test():
-            Screen.print(Connection.output(options.statistics, options.percentage))
-        else:
-            Screen.print(Connection.error())
-        sys.stdout.flush()
-        time.sleep(options.seconds)
+    args = parse_command_line()
+    Connection.target = args.destination[0]
+    try:
+        while True:
+            if Connection.test():
+                Screen.print(Connection.output(args.statistics, args.percentage))
+            else:
+                Screen.print(Connection.error())
+            sys.stdout.flush()
+            time.sleep(args.seconds)
+    except KeyboardInterrupt:
+        print()
+        sys.exit(0)
