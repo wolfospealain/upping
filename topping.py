@@ -3,11 +3,14 @@
 
 import argparse
 import sys
+import os
 import subprocess
 import time
 from datetime import datetime, timedelta
 
-VERSION = "1.0"
+version = "1.0"
+install_path = "/usr/local/bin"
+
 
 class Screen:
     """Print overwriting output string."""
@@ -66,6 +69,7 @@ class Ping:
             sys.exit(0)
         except:
             return False
+
 
 class Connection:
     """Connection status and history."""
@@ -131,41 +135,62 @@ class Connection:
 
     def output(statistics=False, distance=False):
         """Generate connection history output."""
-        message = Connection.target + ": " + str(Connection.one.average()) + "ms"
+        message = Connection.target + ": avg. to 1m " + str(Connection.one.average()) + "ms"
         if len(Connection.five.times) > len(Connection.one.times):
-            message += ", " + str(Connection.five.average()) + "ms"
+            message += ", 5m " + str(Connection.five.average()) + "ms"
             if len(Connection.fifteen.times) > len(Connection.five.times):
-                message += ", " + str(Connection.fifteen.average()) + "ms"
+                message += ", 15m " + str(Connection.fifteen.average()) + "ms"
         if statistics:
             message += " (min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms)"
         if distance:
             message += "; <" + str(Connection.lightspeed(Connection.min)) + "km"
-        message += "; " + str(Connection.uptime) + "; " + str(Connection.ms) + "ms "
+        message += "; up " + str(Connection.uptime).split(sep=".")[0] + "; now " + str(Connection.ms) + "ms "
 
         return message
 
     def error():
         """Generate error message."""
-        message = (Connection.error_message + "; " + str(Connection.uptime))
+        message = (Connection.error_message + "; down " + str(Connection.uptime).split(sep=".")[0])
         return message
 
 
+def install(target=install_path):
+    """Install to target path and set executable permission."""
+    print(target, os.path.isdir(target))
+    if os.path.isdir(target):
+        try:
+            subprocess.check_output(["cp", "topping.py", target + "/topping"]).decode("utf-8")
+            subprocess.check_output(["chmod", "a+x", target + "/topping"]).decode("utf-8")
+            print("Installed to " + target + " as topping.")
+        except:
+            print("Not installed.")
+            if os.getuid()!=0:
+                print("Is sudo required?")
+            return False
+    else:
+        print(target, "is not a directory.")
+        return False
+
+
 def parse_command_line():
-    description = "%(prog)s version " + VERSION + ". " \
+    description = "%(prog)s version " + version + ". " \
                   + "A top/uptime inspired version of ping: " \
                   "Average ping speeds for 1, 5, 15 min. (statistics); " \
                   "distance (km); connection uptime / error time; " \
                   "current ping speed."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
-    parser.add_argument("-v", "--version", help="display version and exit",
-                        action="version", version="%(prog)s " + VERSION)
-    parser.add_argument("-d", "--distance", help="estimate distance in km with 2/3 lightspeed",
-                      action="store_true", dest="percentage", default=False)
-    parser.add_argument("-p", "--pause", help="pause seconds between ping requests (default: %(default)s)",
-                      action="store", type=int, dest="seconds", default=2)
-    parser.add_argument("-s", "--statistics", help="display minimum & maximum statistics",
-                      action="store_true",  dest="statistics", default=False)
-    parser.add_argument("destination", type=str, nargs=1, help="network destination IP or address")
+    parser.add_argument("--install", action="store_true", dest="install", default=False,
+                        help="install to Linux destination path (default: " + install_path + ")")
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s " + version,
+                        help="display version and exit")
+    parser.add_argument("-d", "--distance", action="store_true", dest="percentage", default=False,
+                        help="estimate distance in km with 2/3 lightspeed")
+    parser.add_argument("-p", "--pause", action="store", type=int, dest="seconds", default=2,
+                        help="pause seconds between ping requests (default: %(default)s)")
+    parser.add_argument("-s", "--statistics", action="store_true",  dest="statistics", default=False,
+                        help="display minimum & maximum statistics")
+    parser.add_argument("destination", type=str, nargs='?', default="8.8.8.8",
+                        help="network destination IP or address (default: %(default)s)")
     args = parser.parse_args()
     if not args:
         parser.print_help()
@@ -175,7 +200,10 @@ def parse_command_line():
 
 if __name__ == "__main__":
     args = parse_command_line()
-    Connection.target = args.destination[0]
+    if args.install:
+        install(install_path if args.destination == "8.8.8.8" else args.destination)
+        exit()
+    Connection.target = args.destination
     try:
         while True:
             if Connection.test():
