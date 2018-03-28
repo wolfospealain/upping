@@ -150,7 +150,7 @@ class Connection:
 
     def error():
         """Generate error message."""
-        message = (Connection.error_message + "; down " + str(Connection.uptime).split(sep=".")[0])
+        message = (Connection.error_message + "; down " + str(Connection.uptime).split(sep=".")[0]) + " "
         return message
 
 
