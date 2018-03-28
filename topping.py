@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # wolfospealain, March 2018.
+# https://github.com/wolfospealain/topping
 
 import argparse
 import sys
@@ -94,6 +95,8 @@ class Connection:
             Connection.one.add(Connection.ms)
             Connection.five.add(Connection.ms)
             Connection.fifteen.add(Connection.ms)
+            Connection.min = None
+            Connection.max = None
             # Update statistics.
             if Connection.min:
                 if Connection.ms < Connection.min:
