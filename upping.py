@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # wolfospealain, March 2018.
-# https://github.com/wolfospealain/topping
+# https://github.com/wolfospealain/upping
 
 import argparse
 import sys
@@ -95,8 +95,6 @@ class Connection:
             Connection.one.add(Connection.ms)
             Connection.five.add(Connection.ms)
             Connection.fifteen.add(Connection.ms)
-            Connection.min = None
-            Connection.max = None
             # Update statistics.
             if Connection.min:
                 if Connection.ms < Connection.min:
@@ -121,6 +119,8 @@ class Connection:
             Connection.one = Log(minutes=1)
             Connection.five = Log(minutes=5)
             Connection.fifteen = Log(minutes=15)
+            Connection.min = None
+            Connection.max = None
             # Update uptime.
             if Connection.up:
                 Connection._clock = now
@@ -162,9 +162,9 @@ def install(target=install_path):
     print(target, os.path.isdir(target))
     if os.path.isdir(target):
         try:
-            subprocess.check_output(["cp", "topping.py", target + "/topping"]).decode("utf-8")
-            subprocess.check_output(["chmod", "a+x", target + "/topping"]).decode("utf-8")
-            print("Installed to " + target + " as topping.")
+            subprocess.check_output(["cp", "upping.py", target + "/upping"]).decode("utf-8")
+            subprocess.check_output(["chmod", "a+x", target + "/upping"]).decode("utf-8")
+            print("Installed to " + target + " as upping.")
         except:
             print("Not installed.")
             if os.getuid()!=0:
@@ -177,7 +177,7 @@ def install(target=install_path):
 
 def parse_command_line():
     description = "%(prog)s version " + version + ". " \
-                  + "A top/uptime inspired version of ping: " \
+                  + "An uptime/top inspired version of ping: " \
                   "Average ping speeds for 1, 5, 15 min. (statistics); " \
                   "distance (km); connection uptime / error time; " \
                   "current ping speed."
