@@ -1,10 +1,10 @@
-# TopPing
-A top/uptime inspired version of ping.
+# UpPing
+An uptime/top inspired version of ping.
 
 ```
-usage: topping [-h] [--install] [-v] [-d] [-p SECONDS] [-s] [destination]
+usage: upping [-h] [--install] [-v] [-d] [-p SECONDS] [-s] [destination]
 
-topping version 1.0. A top/uptime inspired version of ping: Average ping
+upping version 1.0. An uptime/top inspired version of ping: Average ping
 speeds for 1, 5, 15 min. (statistics); distance (km); connection uptime /
 error time; current ping speed.
 
