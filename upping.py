@@ -159,7 +159,6 @@ class Connection:
 
 def install(target=install_path):
     """Install to target path and set executable permission."""
-    print(target, os.path.isdir(target))
     if os.path.isdir(target):
         try:
             subprocess.check_output(["cp", "upping.py", target + "/upping"]).decode("utf-8")
