@@ -10,14 +10,13 @@ For audio options:
 ## Usage
 
 ```
-usage: upping.py [-h] [--install] [-V] [-a] [-d] [-e] [-f FILENAME]
-                 [-p SECONDS] [-r] [-s] [-v VOLUME]
-                 [destination]
+usage: upping [-h] [--install] [-V] [-a] [-d] [-e] [-f FILENAME] [-p SECONDS]
+              [-q] [-r] [-s] [-v VOLUME]
+              [destination]
 
-upping.py version 1.0. An uptime/top inspired version of ping:
-Displays/records average ping speeds for 15m, 5m, 1m; current ping speed;
-[statistics;] [distance (km);] connection time. Audible ping speeds and
-errors.
+upping version 1.0. An uptime/top inspired version of ping: Displays/records
+average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;]
+[distance (km);] connection time. Audible ping speeds and errors.
 
 positional arguments:
   destination           network destination IP or address (default: 8.8.8.8)
@@ -35,6 +34,7 @@ optional arguments:
                         record connection history to file
   -p SECONDS, --pause SECONDS
                         pause seconds between ping requests (default: 2)
+  -q, --quiet           quiet mode: no display
   -r, --record          display dis/connection history record
   -s, --statistics      display minimum & maximum statistics
   -v VOLUME, --volume VOLUME
@@ -51,6 +51,8 @@ Cable testing: ```upping -e -v .5 -p .5 192.168.0.1```
 
 WiFi/HotSpot connection speed testing: ```upping -a -s -p .5```
 
+Alert on Internet connection error: ```upping -e -v .5 -q```
+
 Monitor Internet connection: ```upping -a -e -p 30```
 
 Monitor server status: ```upping -v .5 -p 60 -e github.com```
@@ -59,6 +61,6 @@ Show connection statistics: ```upping -s 172.0.0.1```
 
 Log Internet connection to screen: ```upping -r -s```
 
-Log Internet connection to file: ```upping -s -f connection.log```
+Log Internet connection to file: ```upping -q -s -f connection.log```
 
 Estimate maximum distance: ```upping -d github.com```
