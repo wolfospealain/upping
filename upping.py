@@ -30,19 +30,21 @@ try:
         cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(c_error_handler)
 
         def __init__(self, rate=44100, channels=1):
-            self.stream = PyAudio().open(format=paFloat32, channels=channels, rate=rate, output=1)
+            self.stream = PyAudio().open(format=paFloat32, channels=channels, rate=rate, output=True)
             return
 
-        def play(self, frequency=440, length=1, rate=44100):
+        def play(self, frequency=440, length=1.0, volume=1.0, rate=44100):
             """Play sine wave at frequency, for length, at rate parameters values."""
+            self.stream.stop_stream()
+            self.stream.start_stream()
             wave = concatenate(
-                [sin(arange(int(length * rate)) * float(frequency) * (pi * 2) / rate)]) * .25
+                [sin(arange(length * rate) * frequency * pi * 2 / rate)]) * volume
             self.stream.write(wave.astype(float32).tostring())
             return
 
 except ImportError:
     class Sound():
-        def play(self, frequency=None, length=None, rate=None):
+        def play(self, frequency=None, length=None, volume=None, rate=None):
             """No sound available."""
             return
 
@@ -234,7 +236,7 @@ def parse_command_line():
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     parser.add_argument("--install", action="store_true", dest="install", default=False,
                         help="install to Linux destination path (default: " + install_path + ")")
-    parser.add_argument("-v", "--version", action="version", version="%(prog)s " + version,
+    parser.add_argument("-V", "--version", action="version", version="%(prog)s " + version,
                         help="display version and exit")
     parser.add_argument("-a", "--audio", action="store_true", dest="audio", default=False,
                         help="generate audio tone (for pings under 1000ms) - requires PyAudio & NumPy")
@@ -250,6 +252,8 @@ def parse_command_line():
                         help="display dis/connection history record")
     parser.add_argument("-s", "--statistics", action="store_true",  dest="statistics", default=False,
                         help="display minimum & maximum statistics")
+    parser.add_argument("-v", "--volume", action="store", type=float, dest="volume", default=.1,
+                        help="audio volume (default: %(default)s)")
     parser.add_argument("destination", type=str, nargs='?', default="8.8.8.8",
                         help="network destination IP or address (default: %(default)s)")
     args = parser.parse_args()
@@ -281,7 +285,7 @@ if __name__ == "__main__":
                 Screen.print(Connection.output(args.statistics, args.distance))
                 if args.audio:
                     # Range audio between 1100Hz and 100Hz for pings under 1000ms.
-                    beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .5)
+                    beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
 
             else:
                 if args.record and connected and not first_run:
@@ -290,8 +294,8 @@ if __name__ == "__main__":
                         File.print(Connection.error())
                 Screen.print(Connection.error())
                 if args.error:
-                    beep.play(6000, .05)
-                    beep.play(4000, .05)
+                    beep.play(6000, .05, args.volume)
+                    beep.play(4000, .05, args.volume)
             sys.stdout.flush()
             time.sleep(args.seconds)
             first_run = False
