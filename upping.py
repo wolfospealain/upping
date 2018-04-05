@@ -230,7 +230,7 @@ def parse_command_line():
     description = "%(prog)s version " + version + ". " \
                   + "An uptime/top inspired version of ping: " \
                   "Displays/records average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;] " \
-                  "[distance (km);] connection time. Audible ping speed option."
+                  "[distance (km);] connection time. Audible ping speeds and errors."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     parser.add_argument("--install", action="store_true", dest="install", default=False,
                         help="install to Linux destination path (default: " + install_path + ")")
@@ -238,7 +238,7 @@ def parse_command_line():
                         help="display version and exit")
     parser.add_argument("-a", "--audio", action="store_true", dest="audio", default=False,
                         help="generate audio tone (for pings under 1500ms) - requires PyAudio & NumPy")
-    parser.add_argument("-d", "--distance", action="store_true", dest="percentage", default=False,
+    parser.add_argument("-d", "--distance", action="store_true", dest="distance", default=False,
                         help="estimate distance in km with 2/3 lightspeed")
     parser.add_argument("-e", "--error", action="store_true", dest="error", default=False,
                         help="chirp on connection error - requires PyAudio & NumPy")
@@ -277,8 +277,8 @@ if __name__ == "__main__":
                 if args.record and not connected and not first_run:
                     print("@", timestamp())
                     if args.filename:
-                        File.print(Connection.output(args.statistics, args.percentage))
-                Screen.print(Connection.output(args.statistics, args.percentage))
+                        File.print(Connection.output(args.statistics, args.distance))
+                Screen.print(Connection.output(args.statistics, args.distance))
                 if args.audio:
                     # Range audio between 1100Hz and 100Hz for pings under 1000ms.
                     beep.play(int(1100 - Connection.ms), .5)
