@@ -248,6 +248,8 @@ def parse_command_line():
                         help="record connection history to file")
     parser.add_argument("-p", "--pause", action="store", type=float, dest="seconds", default=2,
                         help="pause seconds between ping requests (default: %(default)s)")
+    parser.add_argument("-q", "--quiet", action="store_true", dest="quiet", default=False,
+                        help="quiet mode: no display")
     parser.add_argument("-r", "--record", action="store_true", dest="record", default=False,
                         help="display dis/connection history record")
     parser.add_argument("-s", "--statistics", action="store_true",  dest="statistics", default=False,
@@ -278,21 +280,23 @@ if __name__ == "__main__":
         while True:
             connected = Connection.up
             if Connection.test():
-                if args.record and not connected and not first_run:
+                if args.record and not connected and not first_run and not args.quiet:
                     print("@", timestamp())
                     if args.filename:
                         File.print(Connection.output(args.statistics, args.distance))
-                Screen.print(Connection.output(args.statistics, args.distance))
+                if not args.quiet:
+                    Screen.print(Connection.output(args.statistics, args.distance))
                 if args.audio:
                     # Range audio between 1100Hz and 100Hz for pings under 1000ms.
                     beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
 
             else:
-                if args.record and connected and not first_run:
+                if args.record and connected and not first_run and not args.quiet:
                     print("@", timestamp())
                     if args.filename:
                         File.print(Connection.error())
-                Screen.print(Connection.error())
+                if not args.quiet:
+                    Screen.print(Connection.error())
                 if args.error:
                     beep.play(6000, .05, args.volume)
                     beep.play(4000, .05, args.volume)
