@@ -26,7 +26,7 @@ optional arguments:
   --install             install to Linux destination path (default:
                         /usr/local/bin)
   -v, --version         display version and exit
-  -a, --audio           generate audio tone (for pings under 1500ms) -
+  -a, --audio           generate audio tone (for pings under 1000ms) -
                         requires PyAudio & NumPy
   -d, --distance        estimate distance in km with 2/3 lightspeed
   -e, --error           chirp on connection error - requires PyAudio & NumPy
