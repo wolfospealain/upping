@@ -1,7 +1,7 @@
 # UpPing
 An uptime/top inspired version of ping.
 
-## Install
+## Install (Linux)
 ```sudo python3 ./upping.py --install```
 
 For audio options:
