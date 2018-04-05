@@ -42,7 +42,11 @@ CTRL-C to exit.
 
 ## Use Cases
 
+Simple Internet test: ```upping```
+
 Cable testing: ```upping -e -p .5 192.168.0.1```
+
+WiFi/HotSpot connection speed testing: ```upping -a -s -p .5```
 
 Monitor Internet connection: ```upping -a -e -p 30```
 
