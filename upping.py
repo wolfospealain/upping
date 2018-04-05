@@ -237,7 +237,7 @@ def parse_command_line():
     parser.add_argument("-v", "--version", action="version", version="%(prog)s " + version,
                         help="display version and exit")
     parser.add_argument("-a", "--audio", action="store_true", dest="audio", default=False,
-                        help="generate audio tone (for pings under 1500ms) - requires PyAudio & NumPy")
+                        help="generate audio tone (for pings under 1000ms) - requires PyAudio & NumPy")
     parser.add_argument("-d", "--distance", action="store_true", dest="distance", default=False,
                         help="estimate distance in km with 2/3 lightspeed")
     parser.add_argument("-e", "--error", action="store_true", dest="error", default=False,
@@ -281,7 +281,7 @@ if __name__ == "__main__":
                 Screen.print(Connection.output(args.statistics, args.distance))
                 if args.audio:
                     # Range audio between 1100Hz and 100Hz for pings under 1000ms.
-                    beep.play(int(1100 - Connection.ms), .5)
+                    beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .5)
 
             else:
                 if args.record and connected and not first_run:
