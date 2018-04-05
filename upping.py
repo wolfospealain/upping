@@ -12,6 +12,40 @@ from datetime import datetime, timedelta
 version = "1.0"
 install_path = "/usr/local/bin"
 
+try:
+    from pyaudio import PyAudio, paFloat32
+    from numpy import concatenate, arange, sin, float32
+    from math import pi
+
+
+    class Sound:
+        """Generate sound. Requires PyAudio & NumPy."""
+
+        # Bypass libasound.so error messages.
+        def error_output(filename, line, function, err, fmt):
+            pass
+        from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
+        error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+        c_error_handler = error_handler(error_output)
+        cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(c_error_handler)
+
+        def __init__(self, rate=44100, channels=1):
+            self.stream = PyAudio().open(format=paFloat32, channels=channels, rate=rate, output=1)
+            return
+
+        def play(self, frequency=440, length=1, rate=44100):
+            """Play sine wave at frequency, for length, at rate parameters values."""
+            wave = concatenate(
+                [sin(arange(int(length * rate)) * float(frequency) * (pi * 2) / rate)]) * .25
+            self.stream.write(wave.astype(float32).tostring())
+            return
+
+except ImportError:
+    class Sound():
+        def play(self, frequency, length):
+            """No sound available."""
+            return
+
 
 class Screen:
     """Print overwriting output string."""
@@ -20,9 +54,21 @@ class Screen:
     def print(message):
         length = len(message)
         if length < Screen.printed:
-            message += " " * (Screen.printed - length)
-        Screen.printed = length
+            over_write = message + " " * (Screen.printed - length)
+            print("\r", over_write, sep="", end="")
         print("\r", message, sep="", end="")
+        Screen.printed = length
+        return
+
+
+class File:
+    """Output to file."""
+    name= ""
+
+    def print(message):
+        output = open(File.name, 'a')
+        print(timestamp() + ":", message, file=output)
+        output.close()
         return
 
 
@@ -33,6 +79,7 @@ class Log:
         self.minutes = minutes
         self.count = 0
         self.total = 0
+        return
 
     def add(self, ping):
         """Add new ping test result to the period log. Remove older entries."""
@@ -138,16 +185,17 @@ class Connection:
 
     def output(statistics=False, distance=False):
         """Generate connection history output."""
-        message = Connection.target + ": avg. to 1m " + str(Connection.one.average()) + "ms"
+        message = Connection.target + ": avg. for "
+        if len(Connection.fifteen.times) > len(Connection.five.times):
+            message += "15m " + str(Connection.fifteen.average()) + "ms, "
         if len(Connection.five.times) > len(Connection.one.times):
-            message += ", 5m " + str(Connection.five.average()) + "ms"
-            if len(Connection.fifteen.times) > len(Connection.five.times):
-                message += ", 15m " + str(Connection.fifteen.average()) + "ms"
+            message += "5m " + str(Connection.five.average()) + "ms, "
+        message += "1m " + str(Connection.one.average()) + "ms; now " + str(Connection.ms) + "ms"
         if statistics:
-            message += " (min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms)"
+            message += "; min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms"
         if distance:
             message += "; <" + str(Connection.lightspeed(Connection.min)) + "km"
-        message += "; up " + str(Connection.uptime).split(sep=".")[0] + "; now " + str(Connection.ms) + "ms "
+        message += "; up " + str(Connection.uptime).split(sep=".")[0] + " "
 
         return message
 
@@ -155,6 +203,10 @@ class Connection:
         """Generate error message."""
         message = (Connection.error_message + "; down " + str(Connection.uptime).split(sep=".")[0]) + " "
         return message
+
+
+def timestamp():
+    return datetime.now().strftime('%d/%m/%y %H:%M')
 
 
 def install(target=install_path):
@@ -177,18 +229,25 @@ def install(target=install_path):
 def parse_command_line():
     description = "%(prog)s version " + version + ". " \
                   + "An uptime/top inspired version of ping: " \
-                  "Average ping speeds for 1, 5, 15 min. (statistics); " \
-                  "distance (km); connection uptime / error time; " \
-                  "current ping speed."
+                  "Displays/records average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;] " \
+                  "[distance (km);] connection time. Audible ping speed option."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     parser.add_argument("--install", action="store_true", dest="install", default=False,
                         help="install to Linux destination path (default: " + install_path + ")")
     parser.add_argument("-v", "--version", action="version", version="%(prog)s " + version,
                         help="display version and exit")
+    parser.add_argument("-a", "--audio", action="store_true", dest="audio", default=False,
+                        help="generate audio tone (for pings under 1500ms) - requires PyAudio & NumPy")
     parser.add_argument("-d", "--distance", action="store_true", dest="percentage", default=False,
                         help="estimate distance in km with 2/3 lightspeed")
-    parser.add_argument("-p", "--pause", action="store", type=int, dest="seconds", default=2,
+    parser.add_argument("-e", "--error", action="store_true", dest="error", default=False,
+                        help="chirp on connection error - requires PyAudio & NumPy")
+    parser.add_argument("-f", "--file", action="store", type=str, dest="filename",
+                        help="record connection history to file")
+    parser.add_argument("-p", "--pause", action="store", type=float, dest="seconds", default=2,
                         help="pause seconds between ping requests (default: %(default)s)")
+    parser.add_argument("-r", "--record", action="store_true", dest="record", default=False,
+                        help="display dis/connection history record")
     parser.add_argument("-s", "--statistics", action="store_true",  dest="statistics", default=False,
                         help="display minimum & maximum statistics")
     parser.add_argument("destination", type=str, nargs='?', default="8.8.8.8",
@@ -205,15 +264,39 @@ if __name__ == "__main__":
     if args.install:
         install(install_path if args.destination == "8.8.8.8" else args.destination)
         exit()
+    if args.filename:
+        File.name = args.filename
+    if args.audio or args.error:
+        beep = Sound()
     Connection.target = args.destination
+    first_run = True
     try:
         while True:
+            connected = Connection.up
             if Connection.test():
+                if args.record and not connected and not first_run:
+                    print("@", timestamp())
+                    if args.filename:
+                        File.print(Connection.output(args.statistics, args.percentage))
                 Screen.print(Connection.output(args.statistics, args.percentage))
+                if args.audio:
+                    # Range audio between 1100Hz and 100Hz for pings under 1000ms.
+                    beep.play(int(1100 - Connection.ms), .5)
+
             else:
+                if args.record and connected and not first_run:
+                    print("@", timestamp())
+                    if args.filename:
+                        File.print(Connection.error())
                 Screen.print(Connection.error())
+                if args.error:
+                    beep.play(6000, .05)
+                    beep.play(4000, .05)
             sys.stdout.flush()
             time.sleep(args.seconds)
+            first_run = False
     except KeyboardInterrupt:
         print()
+        if args.filename:
+            File.print(Connection.output(args.statistics, args.percentage))
         sys.exit(0)
