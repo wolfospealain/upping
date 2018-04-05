@@ -42,7 +42,7 @@ try:
 
 except ImportError:
     class Sound():
-        def play(self, frequency, length):
+        def play(self, frequency, length, rate):
             """No sound available."""
             return
 
