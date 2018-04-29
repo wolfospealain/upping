@@ -259,9 +259,6 @@ def parse_command_line():
     parser.add_argument("destination", type=str, nargs='?', default="8.8.8.8",
                         help="network destination IP or address (default: %(default)s)")
     args = parser.parse_args()
-    if not args:
-        parser.print_help()
-        sys.exit(1)
     return args
 
 
