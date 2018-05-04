@@ -265,9 +265,10 @@ def parse_command_line():
 
 if __name__ == "__main__":
     args = parse_command_line()
-    if args.install:
-        install(install_path if args.destination == "8.8.8.8" else args.destination)
-        exit()
+    if ".py" in sys.argv[0]:
+        if args.install:
+            install(install_path if args.destination == "8.8.8.8" else args.destination)
+            exit()
     if args.filename:
         File.name = args.filename
     if args.audio or args.error:
