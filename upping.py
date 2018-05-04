@@ -234,7 +234,7 @@ def parse_command_line():
                   "Displays/records average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;] " \
                   "[distance (km);] connection time. Audible ping speeds and errors."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
-    if ".py" in "%(prog)s:":
+    if ".py" in sys.argv[0]:
         parser.add_argument("--install", action="store_true", dest="install", default=False, 
                             help="install to Linux destination path (default: " + install_path + ")")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + version,
