@@ -187,23 +187,29 @@ class Connection:
 
     def output(statistics=False, distance=False):
         """Generate connection history output."""
-        message = Connection.target + ": avg. for "
+        averages = ""
+        legend = ""
         if len(Connection.fifteen.times) > len(Connection.five.times):
-            message += "15m " + str(Connection.fifteen.average()) + "ms, "
+            legend += "15|"
+            averages += str(Connection.fifteen.average()) + "|"
         if len(Connection.five.times) > len(Connection.one.times):
-            message += "5m " + str(Connection.five.average()) + "ms, "
-        message += "1m " + str(Connection.one.average()) + "ms; now " + str(Connection.ms) + "ms"
-        if statistics:
-            message += "; min. " + str(Connection.min) + "ms, max. " + str(Connection.max) + "ms"
+            legend += "5|"
+            averages += str(Connection.five.average()) + "|"
+        averages += str(Connection.one.average()) + "ms"
+        message = Connection.target + ": " + legend + "1m avg. " + averages
+        message += " (up " + str(Connection.uptime).split(sep=".")[0] + ") "
         if distance:
-            message += "; <" + str(Connection.lightspeed(Connection.min)) + "km"
-        message += "; up " + str(Connection.uptime).split(sep=".")[0] + " "
+            message += "<" + str(Connection.lightspeed(Connection.min)) + "km; "
+        if statistics:
+            message += str(Connection.min) + " <= " + str(Connection.ms) + "ms <= " + str(Connection.max)
+        else:
+            message += str(Connection.ms) + "ms"
 
         return message
 
     def error():
         """Generate error message."""
-        message = (Connection.error_message + "; down " + str(Connection.uptime).split(sep=".")[0]) + " "
+        message = (Connection.error_message + ": down " + str(Connection.uptime).split(sep=".")[0]) + " "
         return message
 
 
@@ -235,7 +241,7 @@ def parse_command_line():
                   "[distance (km);] connection time. Audible ping speeds and errors."
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     if ".py" in sys.argv[0]:
-        parser.add_argument("--install", action="store_true", dest="install", default=False, 
+        parser.add_argument("--install", action="store_true", dest="install", default=False,
                             help="install to Linux destination path (default: " + install_path + ")")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + version,
                         help="display version and exit")
