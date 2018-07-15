@@ -1,6 +1,10 @@
 #!/usr/bin/python3
-# wolfospealain, March 2018.
-# https://github.com/wolfospealain/upping
+
+"""
+An uptime/top inspired version of ping.
+wolfospealain, March 2018.
+https://github.com/wolfospealain/upping
+"""
 
 import argparse
 import sys
@@ -8,9 +12,6 @@ import os
 import subprocess
 import time
 from datetime import datetime, timedelta
-
-version = "1.0"
-install_path = "/usr/local/bin"
 
 try:
     from pyaudio import PyAudio, paFloat32
@@ -217,7 +218,7 @@ def timestamp():
     return datetime.now().strftime('%d/%m/%y %H:%M')
 
 
-def install(target=install_path):
+def install(target):
     """Install to target path and set executable permission."""
     if os.path.isdir(target):
         try:
@@ -234,11 +235,12 @@ def install(target=install_path):
         return False
 
 
-def parse_command_line():
+def parse_command_line(version):
     description = "%(prog)s version " + version + ". " \
                   + "An uptime/top inspired version of ping: " \
                   "Displays/records average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;] " \
-                  "[distance (km);] connection time. Audible ping speeds and errors."
+                  "[distance (km);] connection time. Audible ping speeds and errors. " \
+                  "https://github.com/wolfospealain/upping"
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     if ".py" in sys.argv[0]:
         parser.add_argument("--install", action="store_true", dest="install", default=False,
@@ -270,7 +272,9 @@ def parse_command_line():
 
 
 if __name__ == "__main__":
-    args = parse_command_line()
+    version = "1.0"
+    install_path = "/usr/local/bin"
+    args = parse_command_line(version)
     if ".py" in sys.argv[0]:
         if args.install:
             install(install_path if args.destination == "8.8.8.8" else args.destination)
