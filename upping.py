@@ -238,8 +238,8 @@ def install(target):
 def parse_command_line(version):
     description = "%(prog)s version " + version + ". " \
                   + "An uptime/top inspired version of ping: " \
-                  "Displays/records average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;] " \
-                  "[distance (km);] connection time. Audible ping speeds and errors. " \
+                  "Displays/records average ping speeds for 15m, 5m, 1m (connection time) < distance km [minimum <= ] current ping ms speed [ <= maximum]. " \
+                  "Audible ping speeds and errors. " \
                   "https://github.com/wolfospealain/upping"
     parser = argparse.ArgumentParser(description=description, epilog="CTRL-C to exit.")
     if ".py" in sys.argv[0]:
