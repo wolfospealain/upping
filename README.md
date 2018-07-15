@@ -14,9 +14,10 @@ usage: upping [-h] [--install] [-V] [-a] [-d] [-e] [-f FILENAME] [-p SECONDS]
               [-q] [-r] [-s] [-v VOLUME]
               [destination]
 
-upping version 1.0. An uptime/top inspired version of ping: Displays/records
-average ping speeds for 15m, 5m, 1m; current ping speed; [statistics;]
-[distance (km);] connection time. Audible ping speeds and errors.
+upping.py version 1.0. An uptime/top inspired version of ping:
+Displays/records average ping speeds for 15m, 5m, 1m (connection time) <
+distance km [minimum <= ] current ping ms speed [ <= maximum]. Audible ping
+speeds and errors. https://github.com/wolfospealain/upping
 
 positional arguments:
   destination           network destination IP or address (default: 8.8.8.8)
