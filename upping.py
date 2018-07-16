@@ -200,7 +200,7 @@ class Connection:
         message = Connection.target + ": " + legend + "1m avg. " + averages
         message += " (up " + str(Connection.uptime).split(sep=".")[0] + ") "
         if distance:
-            message += "<" + str(Connection.lightspeed(Connection.min)) + "km; "
+            message += "<" + str(Connection.lightspeed(Connection.min)) + "km "
         if statistics:
             message += str(Connection.min) + " <= " + str(Connection.ms) + "ms <= " + str(Connection.max) + " "
         else:
