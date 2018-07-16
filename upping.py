@@ -202,9 +202,9 @@ class Connection:
         if distance:
             message += "<" + str(Connection.lightspeed(Connection.min)) + "km; "
         if statistics:
-            message += str(Connection.min) + " <= " + str(Connection.ms) + "ms <= " + str(Connection.max)
+            message += str(Connection.min) + " <= " + str(Connection.ms) + "ms <= " + str(Connection.max) + " "
         else:
-            message += str(Connection.ms) + "ms"
+            message += str(Connection.ms) + "ms "
 
         return message
 
