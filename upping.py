@@ -22,16 +22,15 @@ try:
     class Sound:
         """Generate sound. Requires PyAudio & NumPy."""
 
-        # Bypass libasound.so error messages.
-        def error_output(filename, line, function, err, fmt):
-            pass
-        from ctypes import CFUNCTYPE, c_char_p, c_int, cdll
-        error_handler = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-        c_error_handler = error_handler(error_output)
-        cdll.LoadLibrary('libasound.so').snd_lib_error_set_handler(c_error_handler)
-
         def __init__(self, rate=44100, channels=1):
+            # Suppress Jack and ALSA error messages on Linux: https://github.com/rtmrtmrtmrtm/weakmon/blob/master/weakaudio.py
+            nullfd = os.open("/dev/null", 1)
+            oerr = os.dup(2)
+            os.dup2(nullfd, 2)
             self.stream = PyAudio().open(format=paFloat32, channels=channels, rate=rate, output=True)
+            os.dup2(oerr, 2)
+            os.close(oerr)
+            os.close(nullfd)
             return
 
         def play(self, frequency=440, length=1.0, volume=1.0, rate=44100):
