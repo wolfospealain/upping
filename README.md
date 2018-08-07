@@ -10,22 +10,20 @@ For audio options:
 ## Usage
 
 ```
-usage: upping [-h] [--install] [-V] [-a] [-d] [-e] [-f FILENAME] [-p SECONDS]
+usage: upping [-h] [-V] [-a] [-d] [-e] [-f FILENAME] [-g] [-k KM] [-p SECONDS]
               [-q] [-r] [-s] [-v VOLUME]
               [destination]
 
-upping.py version 1.0. An uptime/top inspired version of ping:
-Displays/records average ping speeds for 15m, 5m, 1m (connection time) <
-distance km [minimum <= ] current ping ms speed [ <= maximum]. Audible ping
-speeds and errors. https://github.com/wolfospealain/upping
+upping version 1.0. An uptime/top inspired version of ping: Displays/records
+average ping speeds for 15m, 5m, 1m (connection time) < distance km [minimum
+<= ] current ping ms speed [ <= maximum]. Audible ping speeds and errors.
+https://github.com/wolfospealain/upping
 
 positional arguments:
   destination           network destination IP or address (default: 8.8.8.8)
 
 optional arguments:
   -h, --help            show this help message and exit
-  --install             install to Linux destination path (default:
-                        /usr/local/bin)
   -V, --version         display version and exit
   -a, --audio           generate audio tone (for pings under 1000ms) -
                         requires PyAudio & NumPy
@@ -33,6 +31,9 @@ optional arguments:
   -e, --error           chirp on connection error - requires PyAudio & NumPy
   -f FILENAME, --file FILENAME
                         record connection history to file
+  -g, --graphical       simple graphical ping display (ESC to leave
+                        fullscreen, F11 to toggle)
+  -k KM, --km KM        calculate speed as a fraction of lightspeed
   -p SECONDS, --pause SECONDS
                         pause seconds between ping requests (default: 2)
   -q, --quiet           quiet mode: no display
@@ -55,6 +56,8 @@ WiFi/HotSpot connection speed testing: ```upping -a -s -p .5```
 Alert on Internet connection error: ```upping -e -v .5 -q```
 
 Monitor Internet connection: ```upping -a -e -p 30```
+
+Large Display: ```upping -g```
 
 Monitor server status: ```upping -v .5 -p 60 -e github.com```
 
