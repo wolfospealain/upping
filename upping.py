@@ -191,7 +191,7 @@ class Connection:
         percentage = round(km * 2 * 1000 / c / (ms/1000) * 100, 1)
         return percentage
 
-    def output(statistics=False, distance=False, km=0):
+    def text(statistics=False, distance=False, km=0):
         """Generate connection history output."""
         averages = ""
         legend = ""
@@ -214,7 +214,7 @@ class Connection:
             message += str(Connection.ms) + "ms "
         return message
 
-    def simple(statistics, distance, km):
+    def gui_text(statistics, distance, km):
         """Simple connection output for GUI."""
         message = str(Connection.ms) + "ms "
         if distance:
@@ -238,21 +238,54 @@ class Connection:
         return message
 
 
-class GUI:
-    text_colour = "lightgreen"
-    background_colour = "black"
-    font = "Courier New"
-    font_size = 160
+class Application:
 
-    def __init__(self, screen, title, statistics, distance, km, filename=None, delay=60000):
-        self.screen = screen
+    def __init__(self, statistics, distance, km, filename=None):
         self.statistics = statistics
         self.distance = distance
-        self.filename = filename
         self.km = km
-        self.delay = delay
+        self.filename = filename
         self.last_output = ""
+
+    def update(self, cli=True):
+        connected = Connection.up
+        if Connection.test():
+            output = Connection.text(self.statistics, self.distance, self.km)
+            if self.filename and not connected and self.last_output != "":
+                File.print(self.last_output)
+            if args.audio:
+                beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
+            self.last_output = output
+            if cli:
+                text = output
+                if args.record and not connected and self.last_output != "" and not args.quiet:
+                        print("@", timestamp())
+            else:
+                text = Connection.gui_text(self.statistics, self.distance, self.km)
+        else:
+            text = Connection.error()
+            if args.filename and connected and self.last_output != "":
+                File.print(self.last_output)
+            self.last_output = text
+            if args.error:
+                beep.play(6000, .05, args.volume)
+                beep.play(4000, .05, args.volume)
+            if cli and args.record and connected and self.last_output != "" and not args.quiet:
+                print("@", timestamp())
+        return text
+
+
+class GUI:
+
+    def __init__(self, screen, app, delay=60000, title="", text_colour = "lightgreen", background_colour = "black", font = "Courier New", font_size = 160):
+        self.screen = screen
+        self.app = app
+        self.delay = delay
         self.screen.title(title)
+        self.text_colour = text_colour
+        self.background_colour = background_colour
+        self.font = font
+        self.font_size = font_size
         self.screen.configure(background=self.background_colour)
         self.screen.resizable(width=YES, height=YES)
         self.screen.attributes("-fullscreen", True)
@@ -262,7 +295,7 @@ class GUI:
                          fg=self.text_colour, border=0, relief=FLAT,
                          highlightbackground="Black")
         self.text.pack(expand=True, fill='both', padx=50, pady=50)
-        self.screen.after(0, self.update, self.delay)
+        self.screen.after(0, self.tick, self.delay)
 
     def toggle_fullscreen(self, event=None):
         self.screen.attributes("-fullscreen", not self.screen.attributes("-fullscreen"))
@@ -270,27 +303,11 @@ class GUI:
     def end_fullscreen(self, event=None):
         self.screen.attributes("-fullscreen", False)
 
-    def update(self, delay):
-        connected = Connection.up
-        if Connection.test():
-            output = Connection.output(self.statistics, self.distance, self.km)
-            if self.filename and not connected and self.last_output != "":
-                File.print(self.last_output)
-            text = Connection.simple(self.statistics, self.distance, self.km)
-            if args.audio:
-                beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
-            self.last_output = output
-        else:
-            text = Connection.error()
-            if args.filename and connected and self.last_output != "":
-                File.print(self.last_output)
-            self.last_output = text
-            if args.error:
-                beep.play(6000, .05, args.volume)
-                beep.play(4000, .05, args.volume)
+    def tick(self, delay):
+        text = app.update(False)
         self.text.delete("1.0", END)
         self.text.insert(INSERT, text)
-        self.screen.after(delay, self.update, delay)
+        self.screen.after(delay, self.tick, delay)
 
 
 def timestamp():
@@ -358,6 +375,8 @@ if __name__ == "__main__":
     print("")
     version = "1.0"
     install_path = "/usr/local/bin"
+    icon = "/usr/share/icons/gnome/256x256/apps/utilities-terminal.png"
+    title = "UpPing"
     args = parse_command_line(version)
     if ".py" in sys.argv[0]:
         if args.install:
@@ -368,46 +387,19 @@ if __name__ == "__main__":
     if args.audio or args.error:
         beep = Sound()
     Connection.target = args.destination
+    app = Application(args.statistics, args.distance, args.km, args.filename)
     if args.graphical:
         from tkinter import *
-        icon = "/usr/share/icons/gnome/256x256/apps/utilities-terminal.png"
-        screen = Tk(className="UpPing")
+        screen = Tk(className=title)
         screen.wm_iconphoto(True, PhotoImage(file=icon))
-        app = GUI(screen, "UpPing", args.statistics, args.distance, args.km, args.filename, args.seconds * 1000)
+        gui = GUI(screen, app, args.seconds * 1000, title=title)
         screen.mainloop()
     else:
         try:
-            last_output = ""
             while True:
-                connected = Connection.up
-                if Connection.test():
-                    output = Connection.output(args.statistics, args.distance, args.km)
-                    if args.record and not connected and last_output != "" and not args.quiet:
-                        print("@", timestamp())
-                    if args.filename and not connected and  last_output != "":
-                        File.print(last_output)
-                    if not args.quiet:
-                        Screen.print(output)
-                    if args.audio:
-                        # Range audio between 1100Hz and 100Hz for pings under 1000ms.
-                        beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
-                    last_output = output
-                else:
-                    output = Connection.error()
-                    if args.record and connected and last_output != "" and not args.quiet:
-                        print("@", timestamp())
-                    if args.filename and connected and last_output != "":
-                        File.print(last_output)
-                    if not args.quiet:
-                        Screen.print(output)
-                    if args.error:
-                        beep.play(6000, .05, args.volume)
-                        beep.play(4000, .05, args.volume)
-                    last_output = output
-                    sys.stdout.flush()
+                Screen.print(app.update())
                 time.sleep(args.seconds)
-                first_run = False
         except KeyboardInterrupt:
             print("\n")
     if args.filename:
-        File.print(Connection.output(args.statistics, args.distance, args.km))
+        File.print(Connection.text(args.statistics, args.distance, args.km))
