@@ -179,13 +179,19 @@ class Connection:
                 Connection.uptime = now - Connection._clock
             return False
 
-    def lightspeed(ms, percentage=2/3):
+    def light_distance(ms, fraction=2 / 3):
         """Calculate the minimum distance for lightspeed travel (in a cable)."""
         c = 299792458
-        km = (c * (ms/1000) * percentage) / 1000 / 2
+        km = (c * (ms/1000) * fraction) / 1000 / 2
         return int(km)
 
-    def output(statistics=False, distance=False):
+    def lightspeed(ms, km):
+        """Calculate the fraction of lightspeed."""
+        c = 299792458
+        percentage = round(km * 2 * 1000 / c / (ms/1000) * 100, 1)
+        return percentage
+
+    def output(statistics=False, distance=False, km=0):
         """Generate connection history output."""
         averages = ""
         legend = ""
@@ -199,18 +205,92 @@ class Connection:
         message = Connection.target + ": " + legend + "1m avg. " + averages
         message += " (up " + str(Connection.uptime).split(sep=".")[0] + ") "
         if distance:
-            message += "<" + str(Connection.lightspeed(Connection.min)) + "km "
+            message += "<" + str(Connection.light_distance(Connection.min)) + "km "
+        elif km:
+            message += "~" + str(Connection.lightspeed(Connection.min, km)) + "%c "
         if statistics:
             message += str(Connection.min) + " <= " + str(Connection.ms) + "ms <= " + str(Connection.max) + " "
         else:
             message += str(Connection.ms) + "ms "
+        return message
 
+    def simple(statistics, distance, km):
+        """Simple connection output for GUI."""
+        message = str(Connection.ms) + "ms "
+        if distance:
+            message += "\n<" + str(Connection.light_distance(Connection.min)) + "km "
+        elif km:
+            message += "\n~" + str(Connection.lightspeed(Connection.min, km)) + "%c "
+        elif statistics:
+            message += "\n>=" + str(Connection.min) + "ms\n<=" + str(Connection.max) + "ms"
+        else:
+            message += "\n" + str(Connection.one.average())
+            if len(Connection.five.times) > len(Connection.one.times):
+                message += "|" + str(Connection.five.average())
+            if len(Connection.fifteen.times) > len(Connection.five.times):
+                message += "|" + str(Connection.fifteen.average())
+            message += "ms"
         return message
 
     def error():
         """Generate error message."""
         message = (Connection.error_message + ": down " + str(Connection.uptime).split(sep=".")[0]) + " "
         return message
+
+
+class GUI:
+    text_colour = "lightgreen"
+    background_colour = "black"
+    font = "Courier New"
+    font_size = 160
+
+    def __init__(self, screen, title, statistics, distance, km, filename=None, delay=60000):
+        self.screen = screen
+        self.statistics = statistics
+        self.distance = distance
+        self.filename = filename
+        self.km = km
+        self.delay = delay
+        self.last_output = ""
+        self.screen.title(title)
+        self.screen.configure(background=self.background_colour)
+        self.screen.resizable(width=YES, height=YES)
+        self.screen.attributes("-fullscreen", True)
+        self.screen.bind("<F11>", self.toggle_fullscreen)
+        self.screen.bind("<Escape>", self.end_fullscreen)
+        self.text = Text(self.screen, font=(self.font, self.font_size, "bold"), bg=self.background_colour,
+                         fg=self.text_colour, border=0, relief=FLAT,
+                         highlightbackground="Black")
+        self.text.pack(expand=True, fill='both', padx=50, pady=50)
+        self.screen.after(0, self.update, self.delay)
+
+    def toggle_fullscreen(self, event=None):
+        self.screen.attributes("-fullscreen", not self.screen.attributes("-fullscreen"))
+
+    def end_fullscreen(self, event=None):
+        self.screen.attributes("-fullscreen", False)
+
+    def update(self, delay):
+        connected = Connection.up
+        if Connection.test():
+            output = Connection.output(self.statistics, self.distance, self.km)
+            if self.filename and not connected and self.last_output != "":
+                File.print(self.last_output)
+            text = Connection.simple(self.statistics, self.distance, self.km)
+            if args.audio:
+                beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
+            self.last_output = output
+        else:
+            text = Connection.error()
+            if args.filename and connected and self.last_output != "":
+                File.print(self.last_output)
+            self.last_output = text
+            if args.error:
+                beep.play(6000, .05, args.volume)
+                beep.play(4000, .05, args.volume)
+        self.text.delete("1.0", END)
+        self.text.insert(INSERT, text)
+        self.screen.after(delay, self.update, delay)
 
 
 def timestamp():
@@ -223,14 +303,14 @@ def install(target):
         try:
             subprocess.check_output(["cp", "upping.py", target + "/upping"]).decode("utf-8")
             subprocess.check_output(["chmod", "a+x", target + "/upping"]).decode("utf-8")
-            print("Installed to " + target + " as upping.")
+            print("Installed to " + target + " as upping.\n")
         except:
             print("Not installed.")
             if os.getuid()!=0:
-                print("Is sudo required?")
+                print("Is sudo required?\n")
             return False
     else:
-        print(target, "is not a directory.")
+        print(target, "is not a directory.\n")
         return False
 
 
@@ -254,6 +334,10 @@ def parse_command_line(version):
                         help="chirp on connection error - requires PyAudio & NumPy")
     parser.add_argument("-f", "--file", action="store", type=str, dest="filename",
                         help="record connection history to file")
+    parser.add_argument("-g", "--graphical", action="store_true", dest="graphical", default=False,
+                        help="simple graphical ping display (ESC to leave fullscreen, F11 to toggle)")
+    parser.add_argument("-k", "--km", action="store", type=float, dest="km", default=0,
+                        help="calculate speed as a fraction of lightspeed")
     parser.add_argument("-p", "--pause", action="store", type=float, dest="seconds", default=2,
                         help="pause seconds between ping requests (default: %(default)s)")
     parser.add_argument("-q", "--quiet", action="store_true", dest="quiet", default=False,
@@ -271,6 +355,7 @@ def parse_command_line(version):
 
 
 if __name__ == "__main__":
+    print("")
     version = "1.0"
     install_path = "/usr/local/bin"
     args = parse_command_line(version)
@@ -283,36 +368,46 @@ if __name__ == "__main__":
     if args.audio or args.error:
         beep = Sound()
     Connection.target = args.destination
-    first_run = True
-    try:
-        while True:
-            connected = Connection.up
-            if Connection.test():
-                if args.record and not connected and not first_run and not args.quiet:
-                    print("@", timestamp())
-                    if args.filename:
-                        File.print(Connection.output(args.statistics, args.distance))
-                if not args.quiet:
-                    Screen.print(Connection.output(args.statistics, args.distance))
-                if args.audio:
-                    # Range audio between 1100Hz and 100Hz for pings under 1000ms.
-                    beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
-
-            else:
-                if args.record and connected and not first_run and not args.quiet:
-                    print("@", timestamp())
-                    if args.filename:
-                        File.print(Connection.error())
-                if not args.quiet:
-                    Screen.print(Connection.error())
-                if args.error:
-                    beep.play(6000, .05, args.volume)
-                    beep.play(4000, .05, args.volume)
-            sys.stdout.flush()
-            time.sleep(args.seconds)
-            first_run = False
-    except KeyboardInterrupt:
-        print()
-        if args.filename:
-            File.print(Connection.output(args.statistics, args.percentage))
-        sys.exit(0)
+    if args.graphical:
+        from tkinter import *
+        icon = "/usr/share/icons/gnome/256x256/apps/utilities-terminal.png"
+        screen = Tk(className="UpPing")
+        screen.wm_iconphoto(True, PhotoImage(file=icon))
+        app = GUI(screen, "UpPing", args.statistics, args.distance, args.km, args.filename, args.seconds * 1000)
+        screen.mainloop()
+    else:
+        try:
+            last_output = ""
+            while True:
+                connected = Connection.up
+                if Connection.test():
+                    output = Connection.output(args.statistics, args.distance, args.km)
+                    if args.record and not connected and last_output != "" and not args.quiet:
+                        print("@", timestamp())
+                    if args.filename and not connected and  last_output != "":
+                        File.print(last_output)
+                    if not args.quiet:
+                        Screen.print(output)
+                    if args.audio:
+                        # Range audio between 1100Hz and 100Hz for pings under 1000ms.
+                        beep.play(int(1100 - Connection.ms) if Connection.ms < 1000 else 0, .1, args.volume)
+                    last_output = output
+                else:
+                    output = Connection.error()
+                    if args.record and connected and last_output != "" and not args.quiet:
+                        print("@", timestamp())
+                    if args.filename and connected and last_output != "":
+                        File.print(last_output)
+                    if not args.quiet:
+                        Screen.print(output)
+                    if args.error:
+                        beep.play(6000, .05, args.volume)
+                        beep.play(4000, .05, args.volume)
+                    last_output = output
+                    sys.stdout.flush()
+                time.sleep(args.seconds)
+                first_run = False
+        except KeyboardInterrupt:
+            print("\n")
+    if args.filename:
+        File.print(Connection.output(args.statistics, args.distance, args.km))
