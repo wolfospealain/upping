@@ -1,1 +1,2 @@
-print("hello, it is Friday.")
+while True:
+    print("hello, it is Friday.")
